@@ -34,7 +34,7 @@ stop_normal()
 }
 start_admin_mode()
 {
-	gpstart -m << EOF
+	gpstart -am << EOF
 y
 EOF
 }
@@ -46,7 +46,7 @@ alter_database()
 }
 stop_admin_mode()
 {
-	gpstop -m
+	gpstop -am
 }
 
 start_normal
