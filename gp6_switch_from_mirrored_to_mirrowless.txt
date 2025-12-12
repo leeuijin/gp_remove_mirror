@@ -1,0 +1,239 @@
+
+1. Mirrored 구성
+[gpadmin@mdw ~]$ gpstate -c
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-Starting gpstate with args: -c
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-local Greenplum Version: 'postgres (Greenplum Database) 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708'
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-Master Greenplum Version: 'PostgreSQL 9.4.26 (Greenplum Database 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708) on x86_64-unknown-linux-gnu, compiled by gcc (GCC) 6.4.0, 64-bit compiled on Nov  4 2025 01:24:06'
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-Obtaining Segment details from master...
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:--------------------------------------------------------------
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:--Current GPDB mirror list and status
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:--Type = Spread
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:--------------------------------------------------------------
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-   Status                             Data State     Primary   Datadir                Port   Mirror   Datadir               Port
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-   Primary Active, Mirror Available   Synchronized   sdw1      /data/primary/gpseg0   6000   sdw2     /data/mirror/gpseg0   7000
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-   Primary Active, Mirror Available   Synchronized   sdw2      /data/primary/gpseg1   6000   sdw3     /data/mirror/gpseg1   7000
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-   Primary Active, Mirror Available   Synchronized   sdw3      /data/primary/gpseg2   6000   sdw4     /data/mirror/gpseg2   7000
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:-   Primary Active, Mirror Available   Synchronized   sdw4      /data/primary/gpseg3   6000   sdw1     /data/mirror/gpseg3   7000
+20251209:10:10:40:030548 gpstate:mdw:gpadmin-[INFO]:--------------------------------------------------------------
+[gpadmin@mdw ~]$
+
+[gpadmin@mdw ~]$ psql -qt -c "select distinct address from gp_segment_configuration where role='m'" postgres > /home/gpadmin/hosts-mirrors
+[gpadmin@mdw ~]$ cat /home/gpadmin/hosts-mirrors
+ smdw
+ sdw1
+ sdw3
+ sdw2
+ sdw4
+
+[gpadmin@mdw ~]$ gpssh -f /home/gpadmin/hosts-mirrors -e "/usr/local/greenplum-db/bin/pg_ctl -D /data/mirror/gpseg* stop -m fast"
+[sdw4] /usr/local/greenplum-db/bin/pg_ctl -D /data/mirror/gpseg* stop -m fast
+[sdw4] waiting for server to shut down.... done
+[sdw4] server stopped
+[smdw] /usr/local/greenplum-db/bin/pg_ctl -D /data/mirror/gpseg* stop -m fast
+[smdw] pg_ctl: directory "/data/mirror/gpseg*" does not exist
+[sdw2] /usr/local/greenplum-db/bin/pg_ctl -D /data/mirror/gpseg* stop -m fast
+[sdw2] waiting for server to shut down.... done
+[sdw2] server stopped
+[sdw1] /usr/local/greenplum-db/bin/pg_ctl -D /data/mirror/gpseg* stop -m fast
+[sdw1] waiting for server to shut down.... done
+[sdw1] server stopped
+[sdw3] /usr/local/greenplum-db/bin/pg_ctl -D /data/mirror/gpseg* stop -m fast
+[sdw3] waiting for server to shut down.... done
+[sdw3] server stopped
+[gpadmin@mdw ~]$
+
+[gpadmin@mdw ~]$ gpstate -e
+20251209:10:12:41:033593 gpstate:mdw:gpadmin-[INFO]:-Starting gpstate with args: -e
+20251209:10:12:41:033593 gpstate:mdw:gpadmin-[INFO]:-local Greenplum Version: 'postgres (Greenplum Database) 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708'
+20251209:10:12:41:033593 gpstate:mdw:gpadmin-[INFO]:-Master Greenplum Version: 'PostgreSQL 9.4.26 (Greenplum Database 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708) on x86_64-unknown-linux-gnu, compiled by gcc (GCC) 6.4.0, 64-bit compiled on Nov  4 2025 01:24:06'
+20251209:10:12:41:033593 gpstate:mdw:gpadmin-[INFO]:-Obtaining Segment details from master...
+20251209:10:12:41:033593 gpstate:mdw:gpadmin-[INFO]:-Gathering data from segments...
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[WARNING]:-pg_stat_replication shows no standby connections
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[WARNING]:-pg_stat_replication shows no standby connections
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[WARNING]:-pg_stat_replication shows no standby connections
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[WARNING]:-pg_stat_replication shows no standby connections
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-----------------------------------------------------
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-Segment Mirroring Status Report
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-----------------------------------------------------
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-Unsynchronized Segment Pairs
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   Current Primary   Port   WAL sync remaining bytes   Startup recovery remaining bytes   Mirror   Port
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw1              6000   Unknown                    Unknown                            sdw2     7000
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw2              6000   Unknown                    Unknown                            sdw3     7000
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw3              6000   Unknown                    Unknown                            sdw4     7000
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw4              6000   Unknown                    Unknown                            sdw1     7000
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-----------------------------------------------------
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-Downed Segments (may include segments where status could not be retrieved)
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   Segment   Port   Config status   Status
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw2      7000   Down            Down in configuration
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw3      7000   Down            Down in configuration
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw4      7000   Down            Down in configuration
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-   sdw1      7000   Down            Down in configuration
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-*****************************************************
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-Please monitor the output of the 'Wal sync remaining bytes' and 'Startup recovery remaining bytes' columns when tracking recovery of segments. Segments undergoing WAL sync or Startup recovery may still be marked 'Down' in gp_segment_configuration. Please allow these operations to complete for the segments to get marked 'Up'.
+20251209:10:12:42:033593 gpstate:mdw:gpadmin-[INFO]:-*****************************************************
+[gpadmin@mdw ~]$
+
+
+# trigger the FTS probe to mark the mirrors down.
+[gpadmin@mdw ~]$ psql -c "select gp_request_fts_probe_scan();" postgres
+ gp_request_fts_probe_scan
+---------------------------
+ t
+(1 row)
+
+[gpadmin@mdw ~]$
+
+
+# verify the mirrors are down (due to mirror threshold GUC and such might take some time), should report all the mirrors 
+[gpadmin@mdw ~]$ psql -c "select * from gp_segment_configuration where role='m' and status = 'd'" postgres
+ dbid | content | role | preferred_role | mode | status | port | hostname | address |       datadir
+------+---------+------+----------------+------+--------+------+----------+---------+---------------------
+    7 |       1 | m    | m              | n    | d      | 7000 | sdw3     | sdw3    | /data/mirror/gpseg1
+    8 |       2 | m    | m              | n    | d      | 7000 | sdw4     | sdw4    | /data/mirror/gpseg2
+    9 |       3 | m    | m              | n    | d      | 7000 | sdw1     | sdw1    | /data/mirror/gpseg3
+    6 |       0 | m    | m              | n    | d      | 7000 | sdw2     | sdw2    | /data/mirror/gpseg0
+(4 rows)
+
+[gpadmin@mdw ~]$
+
+# and primaries are not synced, should report all the primaries
+[gpadmin@mdw ~]$ psql -c "select * from gp_segment_configuration where mode='n';" postgres
+ dbid | content | role | preferred_role | mode | status | port | hostname | address |       datadir
+------+---------+------+----------------+------+--------+------+----------+---------+----------------------
+    3 |       1 | p    | p              | n    | u      | 6000 | sdw2     | sdw2    | /data/primary/gpseg1
+    7 |       1 | m    | m              | n    | d      | 7000 | sdw3     | sdw3    | /data/mirror/gpseg1
+    4 |       2 | p    | p              | n    | u      | 6000 | sdw3     | sdw3    | /data/primary/gpseg2
+    8 |       2 | m    | m              | n    | d      | 7000 | sdw4     | sdw4    | /data/mirror/gpseg2
+    5 |       3 | p    | p              | n    | u      | 6000 | sdw4     | sdw4    | /data/primary/gpseg3
+    9 |       3 | m    | m              | n    | d      | 7000 | sdw1     | sdw1    | /data/mirror/gpseg3
+    2 |       0 | p    | p              | n    | u      | 6000 | sdw1     | sdw1    | /data/primary/gpseg0
+    6 |       0 | m    | m              | n    | d      | 7000 | sdw2     | sdw2    | /data/mirror/gpseg0
+(8 rows)
+
+[gpadmin@mdw ~]$
+
+
+# remove the stopped mirrors
+[gpadmin@mdw ~]$ psql -c "select gp_remove_segment_mirror(content) from gp_segment_configuration where role = 'm'" postgres
+ gp_remove_segment_mirror
+--------------------------
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+[gpadmin@mdw ~]$
+# remove replication slot
+[gpadmin@mdw ~]$ psql -c "select pg_drop_replication_slot('internal_wal_replication_slot') from gp_dist_random('gp_id')" postgres
+ pg_drop_replication_slot
+--------------------------
+
+
+
+
+(4 rows)
+
+[gpadmin@mdw ~]$
+
+# change GUC to support mirrorless
+gpconfig -c wal_level -v minimal --skipvalidation # default is `replication`
+gpconfig -c max_wal_senders -v 0 --skipvalidation
+gpconfig -c max_replication_slots -v 0 --skipvalidation
+gpconfig -c wal_keep_segments -v 0
+gpconfig -c gp_dispatch_keepalives_idle -v 20
+gpconfig -c gp_dispatch_keepalives_interval -v 20
+gpconfig -c gp_dispatch_keepalives_count -v 44
+
+# apply settings and get cluster ready for mirrorless deployment
+gpstop -fa
+gpstart -a 
+gpstate -e
+
+[gpadmin@mdw ~]$ gpstart -a
+20251209:10:16:32:040393 gpstart:mdw:gpadmin-[INFO]:-Starting gpstart with args: -a
+20251209:10:16:32:040393 gpstart:mdw:gpadmin-[INFO]:-Gathering information and validating the environment...
+20251209:10:16:32:040393 gpstart:mdw:gpadmin-[INFO]:-Greenplum Binary Version: 'postgres (Greenplum Database) 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708'
+20251209:10:16:32:040393 gpstart:mdw:gpadmin-[INFO]:-Greenplum Catalog Version: '301908232'
+20251209:10:16:32:040393 gpstart:mdw:gpadmin-[INFO]:-Starting Master instance in admin mode
+20251209:10:16:33:040393 gpstart:mdw:gpadmin-[INFO]:-Obtaining Greenplum Master catalog information
+20251209:10:16:33:040393 gpstart:mdw:gpadmin-[INFO]:-Obtaining Segment details from master...
+20251209:10:16:33:040393 gpstart:mdw:gpadmin-[INFO]:-Setting new master era
+20251209:10:16:33:040393 gpstart:mdw:gpadmin-[INFO]:-Master Started...
+20251209:10:16:33:040393 gpstart:mdw:gpadmin-[INFO]:-Shutting down master
+20251209:10:16:34:040393 gpstart:mdw:gpadmin-[INFO]:-Commencing parallel segment instance startup, please wait...
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-Process results...
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-----------------------------------------------------
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-   Successful segment starts                                            = 4
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-   Failed segment starts                                                = 0
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-   Skipped segment starts (segments are marked down in configuration)   = 0
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-----------------------------------------------------
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-Successfully started 4 of 4 segment instances
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-----------------------------------------------------
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-Starting Master instance mdw directory /data/master/gpseg-1
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-Command pg_ctl reports Master mdw instance active
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-Connecting to dbname='template1' connect_timeout=15
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-No standby master configured.  skipping...
+20251209:10:16:35:040393 gpstart:mdw:gpadmin-[INFO]:-Database successfully started
+[gpadmin@mdw ~]$
+
+[gpadmin@mdw ~]$ gpstate -f
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:-Starting gpstate with args: -f
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:-local Greenplum Version: 'postgres (Greenplum Database) 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708'
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:-Master Greenplum Version: 'PostgreSQL 9.4.26 (Greenplum Database 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708) on x86_64-unknown-linux-gnu, compiled by gcc (GCC) 6.4.0, 64-bit compiled on Nov  4 2025 01:24:06'
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:-Obtaining Segment details from master...
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:-Standby master instance not configured
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:--------------------------------------------------------------
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:--pg_stat_replication
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:--------------------------------------------------------------
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:-No entries found.
+20251209:10:20:33:047679 gpstate:mdw:gpadmin-[INFO]:--------------------------------------------------------------
+[gpadmin@mdw ~]$
+
+[gpadmin@mdw ~]$ gpstate -e
+20251209:10:16:52:041229 gpstate:mdw:gpadmin-[INFO]:-Starting gpstate with args: -e
+20251209:10:16:52:041229 gpstate:mdw:gpadmin-[INFO]:-local Greenplum Version: 'postgres (Greenplum Database) 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708'
+20251209:10:16:52:041229 gpstate:mdw:gpadmin-[INFO]:-Master Greenplum Version: 'PostgreSQL 9.4.26 (Greenplum Database 6.31.1 build commit:68956df72b0696434917e81d0eeb23f708b60708) on x86_64-unknown-linux-gnu, compiled by gcc (GCC) 6.4.0, 64-bit compiled on Nov  4 2025 01:24:06'
+20251209:10:16:52:041229 gpstate:mdw:gpadmin-[INFO]:-Obtaining Segment details from master...
+20251209:10:16:52:041229 gpstate:mdw:gpadmin-[INFO]:-Physical mirroring is not configured
+[gpadmin@mdw ~]$
+
+[gpadmin@mdw ~]$ psql -c "select * from gp_segment_configuration order by 1;"
+ dbid | content | role | preferred_role | mode | status | port | hostname | address |       datadir
+------+---------+------+----------------+------+--------+------+----------+---------+----------------------
+    2 |       0 | p    | p              | n    | u      | 6000 | sdw1     | sdw1    | /data/primary/gpseg0
+    3 |       1 | p    | p              | n    | u      | 6000 | sdw2     | sdw2    | /data/primary/gpseg1
+    4 |       2 | p    | p              | n    | u      | 6000 | sdw3     | sdw3    | /data/primary/gpseg2
+    5 |       3 | p    | p              | n    | u      | 6000 | sdw4     | sdw4    | /data/primary/gpseg3
+   11 |      -1 | p    | p              | s    | u      | 5432 | mdw      | mdw     | /data/master/gpseg-1
+(5 rows)
+
+[gpadmin@mdw ~]$
+
+[gpadmin@mdw ~]$ sshseg "du -sh /data/mirror/gp*"
+[sdw1] 2.5G /data/mirror/gpseg3
+[sdw2] 3.5G /data/mirror/gpseg0
+[sdw3] 2.7G /data/mirror/gpseg1
+[sdw4] 2.7G /data/mirror/gpseg2
+[gpadmin@mdw ~]$ sshseg "rm -rf /data/mirror/gpse*"
+[gpadmin@mdw ~]$ sshseg "du -sh /data/mirror/gp*"
+du: cannot access `/data/mirror/gp*': 그런 파일이나 디렉터리가 없습니다
+du: cannot access `/data/mirror/gp*': 그런 파일이나 디렉터리가 없습니다
+du: cannot access `/data/mirror/gp*': 그런 파일이나 디렉터리가 없습니다
+du: cannot access `/data/mirror/gp*': 그런 파일이나 디렉터리가 없습니다
+[gpadmin@mdw ~]$
+
+
+[gpadmin@mdw ~]$ psql -c "create temp table t as select generate_series(1, 1000); select count(*), gp_segment_id from t group by gp_segment_id" postgres
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause. Creating a NULL policy entry.
+ count | gp_segment_id
+-------+---------------
+   249 |             2
+   229 |             0
+   260 |             1
+   262 |             3
+(4 rows)
+
+[gpadmin@mdw ~]$
+
